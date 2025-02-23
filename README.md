@@ -24,7 +24,7 @@ A powerful Python-based tool that generates comprehensive market research report
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/market-analysis-wizard.git
+git clone https://github.com/aman-24052001/market-analysis-wizard.git
 cd market-analysis-wizard
 ```
 
