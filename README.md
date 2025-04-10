@@ -2,7 +2,8 @@
 
 A powerful Python-based tool that generates comprehensive market research reports using AI and real-time data analysis. The tool leverages Google's Gemini Pro API for intelligent analysis and SerpAPI for gathering competitive intelligence.
 
-![image](https://github.com/user-attachments/assets/6c928903-1aab-4e3f-a1fd-f4442990b612)
+![image](https://github.com/user-attachments/assets/f80667c4-505f-47f4-8333-ee999e34fff5)
+
 
 
 ## Features ✨
