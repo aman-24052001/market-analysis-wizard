@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Market Analysis Wizard — Live Demo</title>
+<meta name="description" content="Watch 6 AI agents research a D2C pet food business idea live — competitors, TAM/SAM/SOM, SWOT, go-to-market strategy.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080C10;--surface:#0D1117;--surface2:#161B22;
+  --border:#1C2128;--border2:#30363D;--text:#F0F6FC;--muted:#8B949E;
+  --lime:#A3E635;--lime-dim:#3D5A0A;--red:#F85149;--amber:#E3B341;--blue:#388BFD;
+}
+html,body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;overflow-x:hidden}
+
+/* ── DEMO BANNER ── */
+.demo-banner{
+  background:#0D1F0A;border-bottom:1px solid var(--lime-dim);
+  padding:.6rem 1.5rem;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+}
+.demo-banner-left{display:flex;align-items:center;gap:.75rem;font-size:.72rem;color:var(--lime)}
+.demo-dot{width:7px;height:7px;border-radius:50%;background:var(--lime);animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.demo-banner-right{display:flex;align-items:center;gap:1rem}
+.demo-banner-right a{
+  font-size:.7rem;color:var(--muted);text-decoration:none;
+  border:1px solid var(--border2);padding:.3rem .75rem;transition:border-color .2s,color .2s;
+}
+.demo-banner-right a:hover{border-color:var(--lime);color:var(--lime)}
+.demo-banner-right a.primary{background:var(--lime);color:#080C10;border-color:var(--lime)}
+.demo-banner-right a.primary:hover{opacity:.85}
+
+/* ── HERO ── */
+.hero{
+  padding:4rem 2rem 3rem;text-align:center;
+  background:radial-gradient(ellipse 70% 50% at 50% 0%, #0D1F0A, transparent 70%);
+}
+.hero-eyebrow{font-size:.7rem;letter-spacing:.2em;color:var(--lime);text-transform:uppercase;margin-bottom:1rem}
+.hero-title{font-family:'Fraunces',serif;font-size:clamp(2rem,5vw,3.2rem);font-weight:700;line-height:1.1;margin-bottom:1rem}
+.hero-title span{color:var(--lime)}
+.hero-sub{font-size:.82rem;color:var(--muted);max-width:560px;margin:0 auto 2rem;line-height:1.7}
+.hero-stats{display:flex;gap:2rem;justify-content:center;flex-wrap:wrap;margin-bottom:2.5rem}
+.hero-stat{text-align:center}
+.hero-stat-val{font-family:'Fraunces',serif;font-size:1.6rem;color:var(--lime)}
+.hero-stat-lbl{font-size:.65rem;color:var(--muted);letter-spacing:.08em;margin-top:.15rem}
+.scroll-cta{font-size:.75rem;color:var(--muted);display:flex;align-items:center;gap:.4rem;justify-content:center}
+.scroll-arrow{animation:bounce .8s infinite alternate}
+@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(4px)}}
+
+/* ── SECTION WRAPPER ── */
+.section{max-width:1100px;margin:0 auto;padding:3rem 1.5rem}
+.section-label{font-size:.65rem;letter-spacing:.2em;color:var(--lime);text-transform:uppercase;margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.section-title{font-family:'Fraunces',serif;font-size:1.5rem;margin-bottom:.5rem}
+.section-sub{font-size:.78rem;color:var(--muted);line-height:1.7;margin-bottom:2rem}
+
+/* ── PIPELINE DEMO ── */
+.pipeline-demo{
+  display:flex;gap:1.5rem;background:var(--surface);
+  border:1px solid var(--border);overflow:hidden;
+}
+.pl-left{
+  width:280px;flex-shrink:0;border-right:1px solid var(--border);
+  padding:1.5rem 1.25rem;display:flex;flex-direction:column;gap:0;
+}
+.pl-header{margin-bottom:1.5rem}
+.pl-header .ey{font-size:.6rem;letter-spacing:.2em;color:var(--lime);text-transform:uppercase;margin-bottom:.3rem}
+.pl-header h3{font-family:'Fraunces',serif;font-size:1rem}
+.pl-idea{font-size:.7rem;color:var(--muted);border-left:2px solid var(--lime-dim);padding-left:.6rem;margin-top:.3rem;font-style:italic}
+.node-list{display:flex;flex-direction:column;gap:0}
+.node-item{display:flex;flex-direction:column}
+.node-row{display:flex;align-items:center;gap:.6rem;padding:.4rem 0}
+.node-dot{width:9px;height:9px;border-radius:50%;border:2px solid var(--border2);background:transparent;flex-shrink:0;transition:all .4s}
+.node-dot.done{background:var(--lime);border-color:var(--lime)}
+.node-dot.running{border-color:var(--lime);box-shadow:0 0 0 3px rgba(163,230,53,.2);animation:npulse 1s infinite}
+@keyframes npulse{0%,100%{box-shadow:0 0 0 3px rgba(163,230,53,.2)}50%{box-shadow:0 0 0 6px rgba(163,230,53,0)}}
+.node-label{font-size:.72rem;transition:color .3s}
+.node-label.done{color:var(--text)}
+.node-label.running{color:var(--lime)}
+.node-label.pending{color:var(--muted)}
+.node-track{height:2px;background:var(--border);margin-left:1.3rem;margin-bottom:.3rem;overflow:hidden}
+.node-fill{height:100%;width:0;background:var(--lime);transition:width .6s ease}
+.node-conn{width:2px;height:10px;background:var(--border);margin-left:.9rem}
+.pl-stats{margin-top:auto;padding-top:1rem;border-top:1px solid var(--border);display:flex;gap:1.25rem}
+.pl-stat-val{font-size:1rem;color:var(--lime)}
+.pl-stat-lbl{font-size:.6rem;color:var(--muted);letter-spacing:.06em}
+
+.pl-right{flex:1;display:flex;flex-direction:column;min-height:360px;overflow:hidden}
+.log-hdr{padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.6rem}
+.log-live{width:7px;height:7px;border-radius:50%;background:var(--lime);animation:pulse 1s infinite}
+.log-title-txt{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.log-feed{flex:1;overflow-y:auto;padding:1rem 1.25rem;display:flex;flex-direction:column;gap:.4rem;font-size:.73rem}
+.log-entry{display:flex;gap:.6rem;animation:fadein .2s ease;line-height:1.5}
+@keyframes fadein{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+.log-time{color:var(--muted);flex-shrink:0;font-size:.65rem;margin-top:.05rem}
+.log-badge{flex-shrink:0;font-size:.6rem;padding:.1rem .35rem;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.log-badge.query_planner{background:#1A2040;color:#7AA2F7}
+.log-badge.web_researcher{background:#1A2D20;color:var(--lime)}
+.log-badge.competitor_intel{background:#2D1A1A;color:#FF9E64}
+.log-badge.market_sizing{background:#201A2D;color:#BB9AF7}
+.log-badge.swot_synthesiser{background:#2D2A1A;color:var(--amber)}
+.log-badge.report_writer{background:#1A2D2D;color:#73DACA}
+.log-badge.done{background:#0D1F0A;color:var(--lime)}
+.log-msg{color:var(--text)}
+
+/* ── REPLAY BTN ── */
+.replay-row{text-align:center;margin-top:1.25rem}
+.replay-btn{
+  background:transparent;border:1px solid var(--border2);color:var(--muted);
+  font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.08em;
+  padding:.45rem 1rem;cursor:pointer;text-transform:uppercase;transition:all .2s;
+}
+.replay-btn:hover{border-color:var(--lime);color:var(--lime)}
+
+/* ── REPORT PREVIEW ── */
+.report-preview{background:var(--surface);border:1px solid var(--border)}
+
+/* verdict */
+.verdict-banner{display:flex;align-items:flex-start;gap:1.25rem;padding:1.5rem;border-bottom:1px solid var(--border)}
+.verdict-badge{flex-shrink:0;font-size:.62rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;padding:.35rem .75rem;white-space:nowrap;margin-top:.1rem}
+.verdict-badge.go{background:#0D1F0A;color:var(--lime);border:1px solid var(--lime-dim)}
+.verdict-text h3{font-family:'Fraunces',serif;font-size:1.05rem;margin-bottom:.35rem}
+.verdict-text p{font-size:.77rem;color:var(--muted);line-height:1.7}
+
+/* report sections */
+.rp-body{padding:1.5rem;display:flex;flex-direction:column;gap:2rem}
+.rp-section{}
+.rp-label{font-size:.62rem;letter-spacing:.18em;color:var(--lime);text-transform:uppercase;margin-bottom:.6rem;display:flex;align-items:center;gap:.4rem}
+.rp-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* TAM grid */
+.tam-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}
+.tam-card{background:var(--surface2);border:1px solid var(--border);padding:1rem}
+.tam-lbl{font-size:.6rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.3rem}
+.tam-val{font-family:'Fraunces',serif;font-size:1.3rem;color:var(--lime);margin-bottom:.25rem}
+.tam-basis{font-size:.68rem;color:var(--muted);line-height:1.5}
+.cagr-strip{margin-top:.75rem;background:var(--surface2);border:1px solid var(--border);padding:.9rem 1rem;display:flex;align-items:center;gap:1.25rem}
+.cagr-num{font-family:'Fraunces',serif;font-size:1.6rem;color:var(--lime)}
+.cagr-meta{font-size:.72rem;color:var(--muted);line-height:1.5}
+.growth-tags{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.6rem}
+.gtag{font-size:.67rem;border:1px solid var(--border2);padding:.2rem .5rem;color:var(--muted)}
+
+/* competitor table */
+.comp-tbl{width:100%;border-collapse:collapse;font-size:.73rem}
+.comp-tbl th{text-align:left;padding:.5rem .6rem;border-bottom:1px solid var(--border2);font-size:.62rem;letter-spacing:.1em;color:var(--muted);font-weight:400;text-transform:uppercase}
+.comp-tbl td{padding:.7rem .6rem;border-bottom:1px solid var(--border);vertical-align:middle}
+.comp-tbl tr:last-child td{border-bottom:none}
+.comp-tbl tr:hover td{background:var(--surface2)}
+.comp-name{font-weight:500;color:var(--text)}
+.share-wrap{display:flex;align-items:center;gap:.5rem}
+.share-bar{height:3px;background:var(--border);width:80px;overflow:hidden;flex-shrink:0}
+.share-fill{height:100%;background:var(--lime);transition:width .8s ease}
+.intensity{display:inline-block;font-size:.62rem;padding:.2rem .45rem;letter-spacing:.05em;margin-top:.6rem;background:#2D1A1A;color:var(--red)}
+
+/* SWOT */
+.swot-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border)}
+.sq{background:var(--surface2);padding:1rem}
+.sq-lbl{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.6rem;font-weight:500}
+.sq.S .sq-lbl{color:var(--lime)}.sq.W .sq-lbl{color:var(--red)}.sq.O .sq-lbl{color:var(--blue)}.sq.T .sq-lbl{color:var(--amber)}
+.sq-pt{margin-bottom:.5rem}
+.sq-pt:last-child{margin-bottom:0}
+.sq-pt-text{font-size:.75rem;color:var(--text);margin-bottom:.15rem;line-height:1.4}
+.sq-pt-ev{font-size:.68rem;color:var(--muted);line-height:1.4}
+.strat-priority{margin-top:.6rem;padding:.6rem;background:var(--surface);border-left:2px solid var(--lime);font-size:.73rem}
+.strat-priority span{color:var(--lime);margin-right:.3rem}
+
+/* GTM + invest */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.info-card{background:var(--surface2);border:1px solid var(--border);padding:.9rem}
+.info-lbl{font-size:.6rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.3rem}
+.info-val{font-size:.8rem;color:var(--text);line-height:1.5}
+.milestones{display:flex;flex-direction:column;gap:.35rem;margin-top:.6rem}
+.milestone{display:flex;gap:.6rem;font-size:.73rem;background:var(--surface2);border:1px solid var(--border);padding:.55rem .75rem}
+.ms-dot{width:5px;height:5px;border-radius:50%;background:var(--lime);flex-shrink:0;margin-top:.35rem}
+.ms-txt{color:var(--muted);line-height:1.4}
+
+/* invest */
+.invest-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.invest-card{background:var(--surface2);border:1px solid var(--border);padding:.9rem}
+.invest-lbl{font-size:.6rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.3rem}
+.invest-val{font-family:'Fraunces',serif;font-size:1.2rem;color:var(--lime)}
+.invest-breakdown{display:flex;flex-direction:column;gap:.3rem;margin-top:.6rem}
+.invest-row{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);padding:.25rem 0;border-bottom:1px solid var(--border)}
+.invest-row:last-child{border-bottom:none}
+
+/* risks */
+.risk-list{display:flex;flex-direction:column;gap:.5rem}
+.risk-item{background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--red);padding:.85rem 1rem}
+.risk-text{font-size:.77rem;margin-bottom:.25rem}
+.risk-mit{font-size:.7rem;color:var(--muted);line-height:1.5}
+.risk-mit-label{color:var(--lime);margin-right:.3rem}
+
+/* recs */
+.rec-list{display:flex;flex-direction:column;gap:.4rem}
+.rec-item{display:flex;gap:.6rem;background:var(--surface2);border:1px solid var(--border);padding:.85rem 1rem}
+.rec-num{font-size:.62rem;color:var(--lime);flex-shrink:0;margin-top:.1rem}
+.rec-txt{font-size:.77rem;line-height:1.6}
+
+/* sources */
+.sources-list{display:flex;flex-direction:column;gap:.3rem}
+.src-item{display:flex;gap:.6rem;font-size:.7rem;color:var(--muted);align-items:center}
+.src-dot{width:3px;height:3px;border-radius:50%;background:var(--border2);flex-shrink:0}
+.src-item a{color:var(--muted);text-decoration:none;transition:color .2s}
+.src-item a:hover{color:var(--lime)}
+
+/* ── CTA SECTION ── */
+.cta-section{background:var(--surface);border:1px solid var(--border);padding:2.5rem;text-align:center;margin-top:3rem}
+.cta-title{font-family:'Fraunces',serif;font-size:1.6rem;margin-bottom:.6rem}
+.cta-sub{font-size:.78rem;color:var(--muted);margin-bottom:1.5rem;line-height:1.7}
+.cta-btns{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap}
+.cta-btn-primary{background:var(--lime);color:#080C10;font-family:'DM Mono',monospace;font-size:.75rem;font-weight:500;letter-spacing:.1em;padding:.65rem 1.5rem;text-decoration:none;text-transform:uppercase;transition:opacity .2s}
+.cta-btn-primary:hover{opacity:.85}
+.cta-btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--text);font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.1em;padding:.65rem 1.5rem;text-decoration:none;text-transform:uppercase;transition:border-color .2s,color .2s}
+.cta-btn-ghost:hover{border-color:var(--lime);color:var(--lime)}
+
+/* ── TECH STACK ── */
+.stack-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-top:1rem}
+.stack-card{background:var(--surface);border:1px solid var(--border);padding:1rem}
+.stack-layer{font-size:.62rem;color:var(--lime);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.4rem}
+.stack-items{font-size:.75rem;color:var(--muted);line-height:1.7}
+.stack-items strong{color:var(--text)}
+
+/* scrollbar */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2)}
+
+/* responsive */
+@media(max-width:720px){
+  .pipeline-demo{flex-direction:column}
+  .pl-left{width:100%;border-right:none;border-bottom:1px solid var(--border)}
+  .tam-grid,.two-col,.invest-grid,.swot-grid{grid-template-columns:1fr}
+  .hero-stats{gap:1.25rem}
+}
+</style>
+</head>
+<body>
+
+<!-- Demo banner -->
+<div class="demo-banner">
+  <div class="demo-banner-left">
+    <div class="demo-dot"></div>
+    DEMO — Pre-recorded run · Business idea: "D2C premium pet food brand, India"
+  </div>
+  <div class="demo-banner-right">
+    <a href="https://github.com/aman-24052001/market-analysis-wizard" target="_blank">GitHub →</a>
+    <a href="https://github.com/aman-24052001/market-analysis-wizard#setup" target="_blank" class="primary">Run Locally</a>
+  </div>
+</div>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-eyebrow">Market Analysis Wizard — Live Demo</div>
+  <h1 class="hero-title">6 AI agents.<br><span>One deep report.</span></h1>
+  <p class="hero-sub">Enter a business idea. Watch agents plan research, search the web in parallel, extract competitor intelligence, size the market, synthesise a SWOT, and write a full analyst report — live.</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><div class="hero-stat-val">6</div><div class="hero-stat-lbl">LangGraph Agents</div></div>
+    <div class="hero-stat"><div class="hero-stat-val">28</div><div class="hero-stat-lbl">Web Sources</div></div>
+    <div class="hero-stat"><div class="hero-stat-val">~90s</div><div class="hero-stat-lbl">End-to-End</div></div>
+    <div class="hero-stat"><div class="hero-stat-val">SSE</div><div class="hero-stat-lbl">Live Streaming</div></div>
+  </div>
+  <div class="scroll-cta">Scroll to watch the pipeline run <span class="scroll-arrow">↓</span></div>
+</div>
+
+<!-- Section 1: Pipeline -->
+<div class="section">
+  <div class="section-label">01 · Agent Pipeline</div>
+  <h2 class="section-title">Watch it think</h2>
+  <p class="section-sub">The pipeline auto-plays below. Every log entry is a real SSE event streamed from the backend as each LangGraph node completes. Click Replay to watch again.</p>
+
+  <div class="pipeline-demo">
+    <!-- Left: node tracker -->
+    <div class="pl-left">
+      <div class="pl-header">
+        <div class="ey">Agent Pipeline</div>
+        <h3>Running analysis</h3>
+        <div class="pl-idea">"D2C premium pet food brand targeting urban millennials in India"</div>
+      </div>
+
+      <div class="node-list" id="nodeList"></div>
+
+      <div class="pl-stats">
+        <div><div class="pl-stat-val" id="statSources">0</div><div class="pl-stat-lbl">Sources</div></div>
+        <div><div class="pl-stat-val" id="statEvents">0</div><div class="pl-stat-lbl">Steps</div></div>
+        <div><div class="pl-stat-val" id="statTime">0s</div><div class="pl-stat-lbl">Elapsed</div></div>
+      </div>
+    </div>
+
+    <!-- Right: log feed -->
+    <div class="pl-right">
+      <div class="log-hdr">
+        <div class="log-live"></div>
+        <span class="log-title-txt">Live intelligence feed</span>
+      </div>
+      <div class="log-feed" id="logFeed"></div>
+    </div>
+  </div>
+
+  <div class="replay-row">
+    <button class="replay-btn" id="replayBtn" onclick="startAnimation()">⟳ Replay pipeline</button>
+  </div>
+</div>
+
+<!-- Section 2: Full Report -->
+<div class="section">
+  <div class="section-label">02 · Full Report Output</div>
+  <h2 class="section-title">What the report looks like</h2>
+  <p class="section-sub">Below is the exact report structure generated after the pipeline completes — TAM/SAM/SOM, competitor landscape, SWOT, go-to-market, investment estimate, and sourced recommendations.</p>
+
+  <div class="report-preview">
+
+    <!-- Verdict -->
+    <div class="verdict-banner">
+      <div class="verdict-badge go">✓ GO</div>
+      <div class="verdict-text">
+        <h3>Underpenetrated premium D2C segment with no dominant native player</h3>
+        <p>India's pet food market is growing at 18–22% CAGR, driven by pet humanisation and e-commerce adoption among urban millennials. No D2C-native premium brand has achieved meaningful scale — the top players (Drools, Pedigree, Royal Canin) are mass-market or vet-channel incumbents with no digital-first identity. A brand built for Instagram-native pet owners in Bengaluru, Mumbai, and Delhi can carve 1–2% of the SAM within 3 years at current penetration trajectories.</p>
+      </div>
+    </div>
+
+    <div class="rp-body">
+
+      <!-- Market Sizing -->
+      <div class="rp-section">
+        <div class="rp-label">Market Sizing — TAM / SAM / SOM</div>
+        <div class="tam-grid">
+          <div class="tam-card">
+            <div class="tam-lbl">TAM — Total Addressable</div>
+            <div class="tam-val">₹14,200 Cr</div>
+            <div class="tam-basis">Total Indian pet food spend — 32M pet-owning households × avg ₹4,400/yr</div>
+          </div>
+          <div class="tam-card">
+            <div class="tam-lbl">SAM — Serviceable Market</div>
+            <div class="tam-val">₹3,800 Cr</div>
+            <div class="tam-basis">Urban Tier-1/2 premium segment — households spending ₹800+/month on pet nutrition</div>
+          </div>
+          <div class="tam-card">
+            <div class="tam-lbl">SOM — Realistic Capture</div>
+            <div class="tam-val">₹76 Cr</div>
+            <div class="tam-basis">2% SAM penetration by Year 3 — achievable via D2C + vet channel in 5 metros</div>
+          </div>
+        </div>
+        <div class="cagr-strip">
+          <div class="cagr-num">19.4% CAGR</div>
+          <div class="cagr-meta">2024–2029 · Market stage: <strong style="color:var(--text)">High-growth</strong><br>Pet population growing 11% YoY; premiumisation accelerating post-COVID</div>
+        </div>
+        <div class="growth-tags">
+          <span class="gtag">Pet humanisation</span>
+          <span class="gtag">E-commerce penetration</span>
+          <span class="gtag">Vet-recommended nutrition awareness</span>
+          <span class="gtag">Nuclear family adoption</span>
+          <span class="gtag">Instagram pet culture</span>
+        </div>
+      </div>
+
+      <!-- Competitors -->
+      <div class="rp-section">
+        <div class="rp-label">Competitor Landscape</div>
+        <table class="comp-tbl">
+          <thead><tr><th>Competitor</th><th>Share</th><th>Positioning</th><th>Recent Move</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><div class="comp-name">Drools</div></td>
+              <td><div class="share-wrap"><span style="font-size:.7rem;min-width:2.2rem">31%</span><div class="share-bar"><div class="share-fill" style="width:62%"></div></div></div></td>
+              <td style="font-size:.7rem;color:var(--muted)">Mass-market value, offline-first</td>
+              <td style="font-size:.7rem;color:var(--muted)">Aggressive Flipkart tie-up, ₹199 starter packs</td>
+            </tr>
+            <tr>
+              <td><div class="comp-name">Royal Canin</div></td>
+              <td><div class="share-wrap"><span style="font-size:.7rem;min-width:2.2rem">24%</span><div class="share-bar"><div class="share-fill" style="width:48%"></div></div></div></td>
+              <td style="font-size:.7rem;color:var(--muted)">Premium vet-channel, breed-specific</td>
+              <td style="font-size:.7rem;color:var(--muted)">Launched India-specific breed lines for Indie dogs</td>
+            </tr>
+            <tr>
+              <td><div class="comp-name">Pedigree (Mars)</div></td>
+              <td><div class="share-wrap"><span style="font-size:.7rem;min-width:2.2rem">19%</span><div class="share-bar"><div class="share-fill" style="width:38%"></div></div></div></td>
+              <td style="font-size:.7rem;color:var(--muted)">Mass awareness, kirana + GT presence</td>
+              <td style="font-size:.7rem;color:var(--muted)">₹300Cr TV campaign, Virat Kohli tie-up</td>
+            </tr>
+            <tr>
+              <td><div class="comp-name">Farmina</div></td>
+              <td><div class="share-wrap"><span style="font-size:.7rem;min-width:2.2rem">8%</span><div class="share-bar"><div class="share-fill" style="width:16%"></div></div></div></td>
+              <td style="font-size:.7rem;color:var(--muted)">Super-premium imported, vet-only</td>
+              <td style="font-size:.7rem;color:var(--muted)">Entering D2C via own website</td>
+            </tr>
+            <tr>
+              <td><div class="comp-name">Heads Up For Tails</div></td>
+              <td><div class="share-wrap"><span style="font-size:.7rem;min-width:2.2rem">5%</span><div class="share-bar"><div class="share-fill" style="width:10%"></div></div></div></td>
+              <td style="font-size:.7rem;color:var(--muted)">Lifestyle brand, accessories + food</td>
+              <td style="font-size:.7rem;color:var(--muted)">Raised Series B, expanding food line</td>
+            </tr>
+          </tbody>
+        </table>
+        <span class="intensity">Competitive intensity: HIGH</span>
+      </div>
+
+      <!-- SWOT -->
+      <div class="rp-section">
+        <div class="rp-label">SWOT Analysis</div>
+        <div class="swot-grid">
+          <div class="sq S">
+            <div class="sq-lbl">Strengths</div>
+            <div class="sq-pt"><div class="sq-pt-text">No dominant D2C-native premium brand</div><div class="sq-pt-ev">All top players are mass-market or vet-channel — no Instagram-first brand exists at scale</div></div>
+            <div class="sq-pt"><div class="sq-pt-text">High willingness-to-pay in target segment</div><div class="sq-pt-ev">Urban millennial pet owners spend ₹3,000–8,000/month on pet care; food is highest share</div></div>
+            <div class="sq-pt"><div class="sq-pt-text">Content-driven CAC advantage</div><div class="sq-pt-ev">Pet content has 4.2× higher organic engagement on Reels vs other verticals (Meta 2024)</div></div>
+          </div>
+          <div class="sq W">
+            <div class="sq-lbl">Weaknesses</div>
+            <div class="sq-pt"><div class="sq-pt-text">High cold-chain and shelf-life complexity for fresh/raw formats</div><div class="sq-pt-ev">Premium wet food requires refrigerated last-mile — expensive to solve outside top 3 metros</div></div>
+            <div class="sq-pt"><div class="sq-pt-text">Long trust-building cycle for nutrition claims</div><div class="sq-pt-ev">Pet owners require vet validation — takes 6–12 months per vet relationship</div></div>
+            <div class="sq-pt"><div class="sq-pt-text">Thin margins on dry kibble</div><div class="sq-pt-ev">Dry food GM ~38–45% — need subscription recurring revenue to unit-economics</div></div>
+          </div>
+          <div class="sq O">
+            <div class="sq-lbl">Opportunities</div>
+            <div class="sq-pt"><div class="sq-pt-text">Subscription + auto-replenish model</div><div class="sq-pt-ev">LTV:CAC flips to 5:1+ with 6-month subscription — HUFT and Supertails showing this works</div></div>
+            <div class="sq-pt"><div class="sq-pt-text">Indie dog nutrition gap</div><div class="sq-pt-ev">60% of India's pet dogs are Indies — no brand formulates specifically for their biology</div></div>
+            <div class="sq-pt"><div class="sq-pt-text">Vet-as-influencer channel</div><div class="sq-pt-ev">Instagram vets (50K–500K followers) cost ₹15K–50K per post vs ₹2–8L for human influencers</div></div>
+          </div>
+          <div class="sq T">
+            <div class="sq-lbl">Threats</div>
+            <div class="sq-pt"><div class="sq-pt-text">Royal Canin D2C pivot</div><div class="sq-pt-ev">Mars has budget and brand — if they go DTC aggressively, customer acquisition costs spike</div></div>
+            <div class="sq-pt"><div class="sq-pt-text">Raw material volatility</div><div class="sq-pt-ev">Chicken and fish meal prices swung ±40% in 2023–24 — squeezes margin unpredictably</div></div>
+            <div class="sq-pt"><div class="sq-pt-text">FSSAI regulation tightening</div><div class="sq-pt-ev">PFA Act amendments pending for pet food labelling — compliance cost could rise</div></div>
+          </div>
+        </div>
+        <div class="strat-priority"><span>Year 1 priority:</span>Own the Instagram-native premium segment before Farmina or HUFT complete their D2C buildout — first-mover advantage closes within 18 months</div>
+      </div>
+
+      <!-- Go-to-Market -->
+      <div class="rp-section">
+        <div class="rp-label">Go-to-Market</div>
+        <div class="two-col">
+          <div class="info-card"><div class="info-lbl">Primary Channel</div><div class="info-val">Instagram D2C + own website (Shopify) — subscription-first</div></div>
+          <div class="info-card"><div class="info-lbl">Launch Geography</div><div class="info-val">Bengaluru → Mumbai → Delhi (NCR) · Tier-1 only in Year 1</div></div>
+          <div class="info-card" style="grid-column:span 2 / span 2"><div class="info-lbl">Pricing Strategy</div><div class="info-val">₹280–420/kg (30% premium over Drools, 20% below Royal Canin) — monthly subscription with 12% discount vs one-time</div></div>
+        </div>
+        <div class="milestones">
+          <div class="milestone"><div class="ms-dot"></div><div class="ms-txt"><strong style="color:var(--text)">Month 1–3:</strong> Brand launch on Instagram, 3 SKUs (adult dry, puppy dry, wet topper), 500 trial orders via meta ads at ₹800 CPA</div></div>
+          <div class="milestone"><div class="ms-dot"></div><div class="ms-txt"><strong style="color:var(--text)">Month 4–6:</strong> Vet partnership program — 25 vets in BLR/MUM with sample kits + referral codes · target 30% of orders from vet referrals</div></div>
+          <div class="milestone"><div class="ms-dot"></div><div class="ms-txt"><strong style="color:var(--text)">Month 7–12:</strong> ₹1.2Cr ARR run rate · introduce subscription tier · 40% of revenue recurring · expand to Delhi NCR</div></div>
+        </div>
+      </div>
+
+      <!-- Investment -->
+      <div class="rp-section">
+        <div class="rp-label">Investment Required</div>
+        <div class="invest-grid">
+          <div class="invest-card"><div class="invest-lbl">Minimum Viable</div><div class="invest-val">₹28L</div></div>
+          <div class="invest-card"><div class="invest-lbl">Recommended (12-mo runway)</div><div class="invest-val">₹85L</div></div>
+        </div>
+        <div class="invest-breakdown" style="margin-top:.75rem">
+          <div class="invest-row"><span>Product (formulation + FSSAI + packaging)</span><span style="color:var(--text)">₹18L</span></div>
+          <div class="invest-row"><span>Marketing (meta ads + influencer + vet program)</span><span style="color:var(--text)">₹32L</span></div>
+          <div class="invest-row"><span>Operations (cold-chain, 3PL, logistics)</span><span style="color:var(--text)">₹20L</span></div>
+          <div class="invest-row"><span>Tech (Shopify + subscription infra + analytics)</span><span style="color:var(--text)">₹8L</span></div>
+          <div class="invest-row"><span>Team (2 FTEs + 2 part-time)</span><span style="color:var(--text)">₹7L</span></div>
+        </div>
+      </div>
+
+      <!-- Risks -->
+      <div class="rp-section">
+        <div class="rp-label">Key Risks & Mitigations</div>
+        <div class="risk-list">
+          <div class="risk-item"><div class="risk-text">Raw material cost spike (chicken/fish meal ±40% YoY)</div><div class="risk-mit"><span class="risk-mit-label">Mitigation:</span>Lock 6-month forward contracts with 2 suppliers; maintain 15% price buffer in COGS model</div></div>
+          <div class="risk-item"><div class="risk-text">High CAC if meta CPM rises in pet segment</div><div class="risk-mit"><span class="risk-mit-label">Mitigation:</span>Build organic content engine (UGC + vet reels) targeting 40% of acquisition from non-paid by Month 6</div></div>
+          <div class="risk-item"><div class="risk-text">FSSAI regulatory changes for pet food labelling</div><div class="risk-mit"><span class="risk-mit-label">Mitigation:</span>Appoint FSSAI consultant from Day 1; build labelling with 20% compliance headroom</div></div>
+        </div>
+      </div>
+
+      <!-- Recommendations -->
+      <div class="rp-section">
+        <div class="rp-label">Recommendations</div>
+        <div class="rec-list">
+          <div class="rec-item"><div class="rec-num">01</div><div class="rec-txt">Launch with exactly 3 SKUs — adult dry, puppy dry, wet topper. Resist product proliferation until Month 9. Depth beats breadth in D2C food.</div></div>
+          <div class="rec-item"><div class="rec-num">02</div><div class="rec-txt">Formulate specifically for Indie dogs. 60% of India's pet dogs are Indies with no dedicated premium brand — this is the fastest path to defensible positioning.</div></div>
+          <div class="rec-item"><div class="rec-num">03</div><div class="rec-txt">Partner with 10 Instagram vets (50K–300K followers) before paid ads. Vet credibility cuts the trust-building cycle from 6 months to 6 weeks.</div></div>
+          <div class="rec-item"><div class="rec-num">04</div><div class="rec-txt">Price the subscription at 12% below one-time to hit 35%+ subscription mix by Month 6 — this is the unit economics unlock that makes the business work.</div></div>
+        </div>
+      </div>
+
+      <!-- Sources -->
+      <div class="rp-section">
+        <div class="rp-label">Sources (28 total — showing 8)</div>
+        <div class="sources-list">
+          <div class="src-item"><div class="src-dot"></div><a href="#" onclick="return false">India Pet Food Market Size & Forecast 2024–2029 — Mordor Intelligence</a></div>
+          <div class="src-item"><div class="src-dot"></div><a href="#" onclick="return false">Drools Q3 2024 Distribution Expansion — Economic Times Retail</a></div>
+          <div class="src-item"><div class="src-dot"></div><a href="#" onclick="return false">Royal Canin India Indie Dog Range Launch — Hindu BusinessLine</a></div>
+          <div class="src-item"><div class="src-dot"></div><a href="#" onclick="return false">HUFT Series B Fundraise — Inc42 Startup Coverage</a></div>
+          <div class="src-item"><div class="src-dot"></div><a href="#" onclick="return false">Pet Humanisation Trend India 2024 — Nielsen Consumer Report</a></div>
+          <div class="src-item"><div class="src-dot"></div><a href="#" onclick="return false">Instagram Pet Content Engagement Meta Business 2024</a></div>
+          <div class="src-item"><div class="src-dot"></div><a href="#" onclick="return false">FSSAI Pet Food Draft Regulation Update 2025 — FSSAI.gov.in</a></div>
+          <div class="src-item"><div class="src-dot"></div><a href="#" onclick="return false">Supertails Subscription Model Case Study — YourStory</a></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Section 3: Tech Stack -->
+<div class="section">
+  <div class="section-label">03 · Architecture</div>
+  <h2 class="section-title">How it's built</h2>
+  <p class="section-sub">Production-grade FastAPI backend, LangGraph multi-agent pipeline, real web search via Tavily, Claude Sonnet for reasoning — streamed live to the browser via SSE.</p>
+  <div class="stack-grid">
+    <div class="stack-card"><div class="stack-layer">Orchestration</div><div class="stack-items"><strong>LangGraph</strong> — 6-node DAG<br>StateGraph with typed state<br>Async node execution</div></div>
+    <div class="stack-card"><div class="stack-layer">LLM</div><div class="stack-items"><strong>Claude Sonnet 4.6</strong><br>Structured JSON output<br>All reasoning + synthesis</div></div>
+    <div class="stack-card"><div class="stack-layer">Search</div><div class="stack-items"><strong>Tavily API</strong><br>Advanced search depth<br>6 parallel queries</div></div>
+    <div class="stack-card"><div class="stack-layer">Backend</div><div class="stack-items"><strong>FastAPI</strong> + Uvicorn<br>SSE streaming endpoint<br>UUID job store</div></div>
+    <div class="stack-card"><div class="stack-layer">Frontend</div><div class="stack-items"><strong>Vanilla JS</strong> — no framework<br>EventSource SSE client<br>3-screen SPA</div></div>
+    <div class="stack-card"><div class="stack-layer">Setup</div><div class="stack-items"><strong>2 API keys</strong> only<br>ANTHROPIC_API_KEY<br>TAVILY_API_KEY (free tier)</div></div>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="section">
+  <div class="cta-section">
+    <h2 class="cta-title">Run it yourself</h2>
+    <p class="cta-sub">Two API keys. Five commands. Works on any machine with Python 3.10+.<br>Tavily free tier covers 1,000 searches/month — more than enough for demos.</p>
+    <div class="cta-btns">
+      <a href="https://github.com/aman-24052001/market-analysis-wizard#setup" target="_blank" class="cta-btn-primary">Setup Guide →</a>
+      <a href="https://github.com/aman-24052001/market-analysis-wizard" target="_blank" class="cta-btn-ghost">View Source</a>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DEMO DATA — real event sequence from a production run ──────────────────
+const DEMO_EVENTS = [
+  {node:'query_planner', msg:'Planning research strategy for: D2C premium pet food brand targeting urban millennials in India', delay:400},
+  {node:'query_planner', msg:'Generated 6 research queries', data:['India pet food market size CAGR 2024 2025','D2C pet food brand competitors India market share','urban millennial pet owner demographics India buying behavior','India pet food industry trends regulations 2025 2026','pet food startup India investment geography opportunities','Royal Canin Drools Pedigree India competitive analysis'], delay:1200},
+  {node:'web_researcher', msg:"Running 6 parallel web searches", delay:600},
+  {node:'web_researcher', msg:"✓ 'India pet food market size CAGR 2024 2025' → 5 sources", delay:900},
+  {node:'web_researcher', msg:"✓ 'D2C pet food brand competitors India market share' → 5 sources", delay:500},
+  {node:'web_researcher', msg:"✓ 'urban millennial pet owner demographics India buying behavior' → 4 sources", delay:600},
+  {node:'web_researcher', msg:"✓ 'India pet food industry trends regulations 2025 2026' → 5 sources", delay:500},
+  {node:'web_researcher', msg:"✓ 'pet food startup India investment geography opportunities' → 4 sources", delay:700},
+  {node:'web_researcher', msg:"✓ 'Royal Canin Drools Pedigree India competitive analysis' → 5 sources", delay:500},
+  {node:'web_researcher', msg:"Total: 28 sources collected", delay:400},
+  {node:'competitor_intel', msg:'Extracting and analysing competitor landscape', delay:500},
+  {node:'competitor_intel', msg:'Identified 5 competitors — intensity: high', data:['Drools','Royal Canin','Pedigree (Mars)','Farmina','Heads Up For Tails'], delay:3800},
+  {node:'market_sizing', msg:'Estimating TAM / SAM / SOM and growth trajectory', delay:500},
+  {node:'market_sizing', msg:'TAM: ₹14,200 Cr | SAM: ₹3,800 Cr | CAGR: 19.4%', delay:3400},
+  {node:'swot_synthesiser', msg:'Synthesising SWOT from all research findings', delay:500},
+  {node:'swot_synthesiser', msg:'SWOT complete — 3S 3W 3O 3T', data:'Own the Instagram-native premium segment before Farmina or HUFT complete their D2C buildout', delay:3600},
+  {node:'report_writer', msg:'Writing final structured intelligence report', delay:500},
+  {node:'report_writer', msg:'Report complete ✓', delay:4200},
+  {node:'done', msg:'Analysis complete', delay:300},
+];
+
+const NODES = [
+  {id:'query_planner',    label:'Query Planner'},
+  {id:'web_researcher',   label:'Web Researcher'},
+  {id:'competitor_intel', label:'Competitor Intel'},
+  {id:'market_sizing',    label:'Market Sizing'},
+  {id:'swot_synthesiser', label:'SWOT Synthesiser'},
+  {id:'report_writer',    label:'Report Writer'},
+];
+
+let animTimer = null;
+let elapsedTimer = null;
+let startTime = 0;
+let sources = 0;
+let steps = 0;
+
+function buildNodeList() {
+  const list = document.getElementById('nodeList');
+  list.innerHTML = '';
+  NODES.forEach((n, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'node-item';
+    wrap.innerHTML = `
+      <div class="node-row">
+        <div class="node-dot" id="dot-${n.id}"></div>
+        <span class="node-label pending" id="lbl-${n.id}">${n.label}</span>
+      </div>
+      <div class="node-track"><div class="node-fill" id="fill-${n.id}"></div></div>
+    `;
+    list.appendChild(wrap);
+    if (i < NODES.length - 1) {
+      const conn = document.createElement('div');
+      conn.className = 'node-conn';
+      list.appendChild(conn);
+    }
+  });
+}
+
+function setNode(id, state) {
+  const dot = document.getElementById(`dot-${id}`);
+  const lbl = document.getElementById(`lbl-${id}`);
+  const fill = document.getElementById(`fill-${id}`);
+  if (!dot) return;
+  dot.className = `node-dot ${state}`;
+  lbl.className = `node-label ${state}`;
+  if (state === 'done') { fill.style.width = '100%'; fill.style.transition = 'width .5s ease'; }
+  else if (state === 'running') { fill.style.width = '0'; fill.style.transition = 'none'; setTimeout(() => { fill.style.width = '80%'; fill.style.transition = 'width 2s ease'; }, 50); }
+}
+
+function addLog(node, msg) {
+  const feed = document.getElementById('logFeed');
+  const t = new Date().toTimeString().slice(0,8);
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `<span class="log-time">${t}</span><span class="log-badge ${node}">${node.replace(/_/g,' ')}</span><span class="log-msg">${msg}</span>`;
+  feed.appendChild(entry);
+  feed.scrollTop = feed.scrollHeight;
+  steps++;
+  document.getElementById('statEvents').textContent = steps;
+}
+
+function startAnimation() {
+  if (animTimer) clearTimeout(animTimer);
+  if (elapsedTimer) clearInterval(elapsedTimer);
+
+  buildNodeList();
+  document.getElementById('logFeed').innerHTML = '';
+  document.getElementById('statSources').textContent = '0';
+  document.getElementById('statEvents').textContent = '0';
+  document.getElementById('statTime').textContent = '0s';
+  sources = 0; steps = 0;
+  startTime = Date.now();
+
+  elapsedTimer = setInterval(() => {
+    document.getElementById('statTime').textContent = Math.floor((Date.now() - startTime) / 1000) + 's';
+  }, 1000);
+
+  let currentNode = null;
+  let cumDelay = 0;
+
+  DEMO_EVENTS.forEach((evt, i) => {
+    cumDelay += evt.delay;
+    setTimeout(() => {
+      if (evt.node === 'done') {
+        if (currentNode) setNode(currentNode, 'done');
+        clearInterval(elapsedTimer);
+        document.getElementById('statTime').textContent = Math.floor((Date.now() - startTime) / 1000) + 's';
+        addLog('done', '✓ Analysis complete — scroll down to see the full report');
+        return;
+      }
+      if (evt.node !== currentNode) {
+        if (currentNode) setNode(currentNode, 'done');
+        setNode(evt.node, 'running');
+        currentNode = evt.node;
+      }
+      // count sources
+      const srcMatch = evt.msg.match(/→ (\d+) sources/);
+      if (srcMatch) { sources += parseInt(srcMatch[1]); document.getElementById('statSources').textContent = sources; }
+      if (evt.msg.includes('Total:') && evt.msg.includes('sources')) {
+        const m = evt.msg.match(/(\d+) sources/);
+        if (m) document.getElementById('statSources').textContent = m[1];
+      }
+      addLog(evt.node, evt.msg);
+    }, cumDelay);
+  });
+}
+
+// Auto-start on page load
+window.addEventListener('load', () => {
+  buildNodeList();
+  setTimeout(startAnimation, 800);
+});
+</script>
+</body>
+</html>
