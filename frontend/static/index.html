@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Market Analysis Wizard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:       #080C10;
+  --surface:  #0D1117;
+  --surface2: #161B22;
+  --border:   #1C2128;
+  --border2:  #30363D;
+  --text:     #F0F6FC;
+  --muted:    #8B949E;
+  --lime:     #A3E635;
+  --lime-dim: #3D5A0A;
+  --red:      #F85149;
+  --amber:    #E3B341;
+  --blue:     #388BFD;
+}
+
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;overflow-x:hidden}
+
+/* ── SCREENS ─────────────────────────────────────────────────────────── */
+.screen{display:none;min-height:100vh;width:100%}
+.screen.active{display:flex}
+
+/* ── SCREEN 1: INPUT ─────────────────────────────────────────────────── */
+#screen-input{
+  flex-direction:column;align-items:center;justify-content:center;
+  padding:2rem;position:relative;
+}
+.input-bg{
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 60% at 50% 40%, #0D1F0A 0%, transparent 70%);
+  pointer-events:none;
+}
+.input-eyebrow{
+  font-size:.7rem;letter-spacing:.2em;color:var(--lime);
+  margin-bottom:1.5rem;text-transform:uppercase;
+}
+.input-title{
+  font-family:'Fraunces',serif;font-size:clamp(2rem,5vw,3.5rem);font-weight:700;
+  text-align:center;line-height:1.1;margin-bottom:.75rem;
+  background:linear-gradient(135deg,#F0F6FC 60%,#A3E635);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.input-subtitle{
+  font-size:.8rem;color:var(--muted);text-align:center;margin-bottom:3rem;max-width:480px;
+}
+.input-box{
+  width:100%;max-width:640px;position:relative;
+}
+.input-box textarea{
+  width:100%;background:var(--surface);border:1px solid var(--border2);
+  color:var(--text);font-family:'DM Mono',monospace;font-size:.9rem;
+  padding:1.25rem 1.25rem 3.5rem;resize:none;outline:none;
+  border-radius:2px;line-height:1.6;
+  transition:border-color .2s;min-height:120px;
+}
+.input-box textarea::placeholder{color:var(--muted)}
+.input-box textarea:focus{border-color:var(--lime)}
+.input-box-footer{
+  position:absolute;bottom:.75rem;left:1.25rem;right:.75rem;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.char-count{font-size:.7rem;color:var(--muted)}
+.analyse-btn{
+  background:var(--lime);color:#080C10;border:none;
+  font-family:'DM Mono',monospace;font-size:.8rem;font-weight:500;
+  letter-spacing:.1em;padding:.6rem 1.4rem;cursor:pointer;
+  text-transform:uppercase;transition:opacity .2s;
+}
+.analyse-btn:hover{opacity:.85}
+.analyse-btn:disabled{opacity:.4;cursor:not-allowed}
+.example-ideas{margin-top:1.5rem;display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;max-width:640px}
+.idea-chip{
+  background:var(--surface);border:1px solid var(--border2);
+  color:var(--muted);font-size:.7rem;padding:.3rem .75rem;cursor:pointer;
+  transition:border-color .2s,color .2s;
+}
+.idea-chip:hover{border-color:var(--lime);color:var(--lime)}
+
+/* ── SCREEN 2: PIPELINE ──────────────────────────────────────────────── */
+#screen-pipeline{
+  flex-direction:row;height:100vh;
+}
+.pipeline-left{
+  width:340px;min-width:300px;border-right:1px solid var(--border);
+  background:var(--surface);display:flex;flex-direction:column;
+  padding:2rem 1.5rem;overflow-y:auto;flex-shrink:0;
+}
+.pipeline-header{margin-bottom:2rem}
+.pipeline-header .eyebrow{font-size:.65rem;letter-spacing:.2em;color:var(--lime);margin-bottom:.5rem}
+.pipeline-header h2{font-family:'Fraunces',serif;font-size:1.3rem;line-height:1.3}
+.pipeline-idea{
+  font-size:.75rem;color:var(--muted);margin-top:.4rem;
+  border-left:2px solid var(--lime-dim);padding-left:.75rem;font-style:italic;
+}
+.node-list{display:flex;flex-direction:column;gap:.75rem}
+.node-item{display:flex;flex-direction:column;gap:.3rem}
+.node-top{display:flex;align-items:center;gap:.75rem}
+.node-dot{
+  width:10px;height:10px;border-radius:50%;flex-shrink:0;
+  border:2px solid var(--border2);background:transparent;
+  transition:background .3s,border-color .3s;
+}
+.node-dot.running{border-color:var(--lime);animation:pulse 1s infinite}
+.node-dot.done{background:var(--lime);border-color:var(--lime)}
+.node-dot.error{background:var(--red);border-color:var(--red)}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(163,230,53,.4)}50%{box-shadow:0 0 0 6px rgba(163,230,53,0)}}
+.node-name{font-size:.78rem;font-weight:500;letter-spacing:.05em}
+.node-name.running{color:var(--lime)}
+.node-name.done{color:var(--text)}
+.node-name.pending{color:var(--muted)}
+.node-track{
+  height:2px;background:var(--border);margin-left:1.4rem;
+  overflow:hidden;border-radius:1px;
+}
+.node-fill{height:100%;width:0;background:var(--lime);transition:width .4s ease}
+.node-fill.done{width:100%}
+.node-fill.running{animation:fill-anim 2s ease-out forwards}
+@keyframes fill-anim{from{width:0}to{width:85%}}
+.node-status{font-size:.65rem;color:var(--muted);margin-left:1.4rem;min-height:.9rem}
+.node-connector{width:2px;height:12px;background:var(--border);margin-left:.65rem}
+
+.pipeline-stats{
+  margin-top:auto;padding-top:1.5rem;border-top:1px solid var(--border);
+  display:flex;gap:1.5rem;
+}
+.stat-item{display:flex;flex-direction:column;gap:.2rem}
+.stat-val{font-size:1.1rem;font-weight:500;color:var(--lime)}
+.stat-lbl{font-size:.65rem;color:var(--muted);letter-spacing:.08em}
+
+.pipeline-right{
+  flex:1;display:flex;flex-direction:column;overflow:hidden;
+}
+.log-header{
+  padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:.75rem;
+}
+.log-dot{width:8px;height:8px;border-radius:50%;background:var(--lime);animation:pulse 1s infinite}
+.log-title{font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.log-feed{
+  flex:1;overflow-y:auto;padding:1.25rem 1.5rem;
+  display:flex;flex-direction:column;gap:.5rem;
+  font-size:.78rem;line-height:1.6;
+}
+.log-entry{display:flex;gap:.75rem;animation:fadein .2s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.log-time{color:var(--muted);flex-shrink:0;font-size:.7rem;margin-top:.05rem}
+.log-node{
+  flex-shrink:0;font-size:.65rem;padding:.1rem .4rem;
+  letter-spacing:.05em;text-transform:uppercase;
+}
+.log-node.query_planner{background:#1A2040;color:#7AA2F7}
+.log-node.web_researcher{background:#1A2D20;color:var(--lime)}
+.log-node.competitor_intel{background:#2D1A1A;color:#FF9E64}
+.log-node.market_sizing{background:#201A2D;color:#BB9AF7}
+.log-node.swot_synthesiser{background:#2D2A1A;color:var(--amber)}
+.log-node.report_writer{background:#1A2D2D;color:#73DACA}
+.log-node.done{background:#0D1F0A;color:var(--lime)}
+.log-node.error{background:#2D1A1A;color:var(--red)}
+.log-msg{color:var(--text)}
+
+/* ── SCREEN 3: REPORT ────────────────────────────────────────────────── */
+#screen-report{flex-direction:column;align-items:stretch}
+.report-nav{
+  position:sticky;top:0;z-index:10;
+  background:rgba(8,12,16,.9);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:1.5rem;padding:.75rem 2rem;
+}
+.report-nav-logo{font-family:'Fraunces',serif;font-size:1rem;color:var(--lime)}
+.report-nav-idea{font-size:.75rem;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.report-nav-actions{display:flex;gap:.75rem}
+.btn-ghost{
+  background:transparent;border:1px solid var(--border2);color:var(--text);
+  font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.08em;
+  padding:.4rem .9rem;cursor:pointer;text-transform:uppercase;transition:border-color .2s;
+}
+.btn-ghost:hover{border-color:var(--lime);color:var(--lime)}
+.btn-lime{
+  background:var(--lime);color:#080C10;border:none;
+  font-family:'DM Mono',monospace;font-size:.72rem;font-weight:500;letter-spacing:.08em;
+  padding:.4rem .9rem;cursor:pointer;text-transform:uppercase;transition:opacity .2s;
+}
+.btn-lime:hover{opacity:.85}
+
+.report-body{max-width:920px;margin:0 auto;padding:3rem 2rem 5rem;width:100%}
+
+/* verdict banner */
+.verdict-banner{
+  display:flex;align-items:flex-start;gap:1.5rem;
+  border:1px solid var(--border2);padding:1.5rem;margin-bottom:2.5rem;
+}
+.verdict-badge{
+  flex-shrink:0;font-size:.65rem;font-weight:500;letter-spacing:.1em;
+  text-transform:uppercase;padding:.4rem .8rem;white-space:nowrap;margin-top:.1rem;
+}
+.verdict-badge.go{background:#0D1F0A;color:var(--lime);border:1px solid var(--lime-dim)}
+.verdict-badge.proceed-with-caution{background:#2D2210;color:var(--amber);border:1px solid #5C4610}
+.verdict-badge.avoid{background:#2D1010;color:var(--red);border:1px solid #5C2020}
+.verdict-text{}
+.verdict-text h3{font-family:'Fraunces',serif;font-size:1.1rem;margin-bottom:.4rem}
+.verdict-text p{font-size:.8rem;color:var(--muted);line-height:1.7}
+
+/* section */
+.r-section{margin-bottom:2.5rem}
+.r-label{
+  font-size:.65rem;letter-spacing:.2em;color:var(--lime);
+  text-transform:uppercase;margin-bottom:.75rem;
+  display:flex;align-items:center;gap:.5rem;
+}
+.r-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.r-title{font-family:'Fraunces',serif;font-size:1.4rem;margin-bottom:.75rem}
+.r-prose{font-size:.82rem;line-height:1.8;color:#C9D1D9}
+
+/* TAM/SAM/SOM funnel */
+.tam-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1rem}
+.tam-card{background:var(--surface);border:1px solid var(--border);padding:1.25rem}
+.tam-label{font-size:.65rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.4rem}
+.tam-value{font-family:'Fraunces',serif;font-size:1.5rem;color:var(--lime);margin-bottom:.3rem}
+.tam-basis{font-size:.72rem;color:var(--muted);line-height:1.5}
+.cagr-row{
+  margin-top:1rem;background:var(--surface);border:1px solid var(--border);
+  padding:1rem;display:flex;align-items:center;gap:1.5rem;
+}
+.cagr-val{font-size:1.8rem;font-family:'Fraunces',serif;color:var(--lime)}
+.cagr-meta{font-size:.75rem;color:var(--muted);line-height:1.5}
+.market-tags{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.75rem}
+.market-tag{font-size:.7rem;border:1px solid var(--border2);padding:.25rem .6rem;color:var(--muted)}
+
+/* Competitor table */
+.comp-table{width:100%;border-collapse:collapse;font-size:.76rem;margin-top:.5rem}
+.comp-table th{
+  text-align:left;padding:.6rem .75rem;border-bottom:1px solid var(--border2);
+  font-size:.65rem;letter-spacing:.1em;color:var(--muted);font-weight:400;text-transform:uppercase;
+}
+.comp-table td{padding:.75rem;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5}
+.comp-table tr:last-child td{border-bottom:none}
+.comp-table tr:hover td{background:var(--surface2)}
+.share-bar-wrap{display:flex;align-items:center;gap:.5rem}
+.share-bar{height:4px;background:var(--border);flex:1;overflow:hidden}
+.share-fill{height:100%;background:var(--lime);transition:width .6s ease}
+.comp-name{font-weight:500;color:var(--text);margin-bottom:.15rem}
+.comp-moves{font-size:.7rem;color:var(--muted)}
+.intensity-badge{
+  display:inline-block;font-size:.65rem;padding:.2rem .5rem;letter-spacing:.06em;margin-top:.75rem;
+}
+.intensity-badge.high{background:#2D1A1A;color:var(--red)}
+.intensity-badge.medium{background:#2D2210;color:var(--amber)}
+.intensity-badge.low{background:#0D1F0A;color:var(--lime)}
+
+/* SWOT 2x2 */
+.swot-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);margin-top:.5rem}
+.swot-quad{background:var(--surface);padding:1.25rem}
+.swot-quad-label{font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;margin-bottom:.75rem;font-weight:500}
+.swot-quad.S .swot-quad-label{color:var(--lime)}
+.swot-quad.W .swot-quad-label{color:var(--red)}
+.swot-quad.O .swot-quad-label{color:var(--blue)}
+.swot-quad.T .swot-quad-label{color:var(--amber)}
+.swot-point{display:flex;flex-direction:column;gap:.15rem;margin-bottom:.75rem}
+.swot-point:last-child{margin-bottom:0}
+.swot-point-text{font-size:.78rem;color:var(--text);line-height:1.4}
+.swot-point-ev{font-size:.7rem;color:var(--muted);line-height:1.4}
+.strategic-priority{
+  margin-top:.75rem;border-top:1px solid var(--border);padding-top:.75rem;
+  font-size:.75rem;color:var(--lime);
+}
+.strategic-priority span{color:var(--muted)}
+
+/* Go-to-market */
+.gtm-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:.5rem}
+.gtm-card{background:var(--surface);border:1px solid var(--border);padding:1rem}
+.gtm-label{font-size:.65rem;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:.3rem}
+.gtm-val{font-size:.82rem;color:var(--text);line-height:1.5}
+.milestones{margin-top:.75rem;display:flex;flex-direction:column;gap:.4rem}
+.milestone{
+  display:flex;align-items:flex-start;gap:.75rem;
+  font-size:.76rem;padding:.6rem;background:var(--surface);border:1px solid var(--border);
+}
+.milestone-dot{width:6px;height:6px;border-radius:50%;background:var(--lime);flex-shrink:0;margin-top:.35rem}
+.milestone-text{color:var(--muted);line-height:1.4}
+
+/* Investment */
+.invest-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:.5rem}
+.invest-card{background:var(--surface);border:1px solid var(--border);padding:1rem}
+.invest-label{font-size:.65rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.3rem}
+.invest-val{font-family:'Fraunces',serif;font-size:1.25rem;color:var(--lime)}
+.invest-breakdown{margin-top:.75rem;display:flex;flex-direction:column;gap:.35rem}
+.invest-row{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);padding:.3rem 0;border-bottom:1px solid var(--border)}
+.invest-row:last-child{border-bottom:none}
+
+/* Risks */
+.risk-list{display:flex;flex-direction:column;gap:.6rem;margin-top:.5rem}
+.risk-item{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--red);padding:1rem}
+.risk-text{font-size:.8rem;color:var(--text);margin-bottom:.3rem}
+.risk-mit{font-size:.73rem;color:var(--muted);line-height:1.5}
+.risk-mit-label{color:var(--lime);margin-right:.3rem}
+
+/* Recommendations */
+.rec-list{display:flex;flex-direction:column;gap:.5rem;margin-top:.5rem}
+.rec-item{
+  display:flex;align-items:flex-start;gap:.75rem;
+  background:var(--surface);border:1px solid var(--border);padding:1rem;
+}
+.rec-num{font-size:.65rem;color:var(--lime);flex-shrink:0;margin-top:.1rem}
+.rec-text{font-size:.8rem;line-height:1.6;color:var(--text)}
+
+/* Sources */
+.sources-list{display:flex;flex-direction:column;gap:.35rem;margin-top:.5rem}
+.source-item{
+  display:flex;align-items:center;gap:.75rem;
+  font-size:.73rem;color:var(--muted);
+}
+.source-item a{color:var(--muted);text-decoration:none;transition:color .2s}
+.source-item a:hover{color:var(--lime)}
+.source-dot{width:4px;height:4px;border-radius:50%;background:var(--border2);flex-shrink:0}
+
+/* scrollbar */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2)}
+
+/* responsive */
+@media(max-width:768px){
+  #screen-pipeline{flex-direction:column}
+  .pipeline-left{width:100%;min-width:unset;border-right:none;border-bottom:1px solid var(--border);padding:1.25rem;max-height:40vh}
+  .tam-grid,.comp-table,.swot-grid,.gtm-grid,.invest-grid{grid-template-columns:1fr}
+  .comp-table{display:block;overflow-x:auto}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ SCREEN 1: INPUT ═══════════════ -->
+<div class="screen active" id="screen-input">
+  <div class="input-bg"></div>
+  <div class="input-eyebrow">Market Intelligence Wizard</div>
+  <h1 class="input-title">Deep research.<br>Real intelligence.</h1>
+  <p class="input-subtitle">Describe any business idea. We'll research competitors, size the market, run a SWOT, and write a full analyst report — live, in front of you.</p>
+
+  <div class="input-box">
+    <textarea id="idea-input" placeholder="e.g. A subscription meal kit service targeting busy working professionals in Tier-1 Indian cities..." maxlength="500" rows="4"></textarea>
+    <div class="input-box-footer">
+      <span class="char-count"><span id="char-used">0</span>/500</span>
+      <button class="analyse-btn" id="analyse-btn" disabled>Analyse →</button>
+    </div>
+  </div>
+
+  <div class="example-ideas">
+    <div class="idea-chip">EV charging network</div>
+    <div class="idea-chip">D2C pet food brand</div>
+    <div class="idea-chip">AI tutoring for UPSC</div>
+    <div class="idea-chip">Co-working spaces in Tier-2 cities</div>
+    <div class="idea-chip">Saree e-commerce platform</div>
+  </div>
+</div>
+
+<!-- ═══════════════ SCREEN 2: PIPELINE ═══════════════ -->
+<div class="screen" id="screen-pipeline">
+
+  <div class="pipeline-left">
+    <div class="pipeline-header">
+      <div class="eyebrow">Agent Pipeline</div>
+      <h2>Running analysis</h2>
+      <div class="pipeline-idea" id="pipeline-idea-label"></div>
+    </div>
+
+    <div class="node-list" id="node-list">
+      <!-- filled by JS -->
+    </div>
+
+    <div class="pipeline-stats">
+      <div class="stat-item">
+        <span class="stat-val" id="stat-sources">0</span>
+        <span class="stat-lbl">Sources</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-val" id="stat-events">0</span>
+        <span class="stat-lbl">Steps</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-val" id="stat-elapsed">0s</span>
+        <span class="stat-lbl">Elapsed</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="pipeline-right">
+    <div class="log-header">
+      <div class="log-dot"></div>
+      <span class="log-title">Live intelligence feed</span>
+    </div>
+    <div class="log-feed" id="log-feed"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ SCREEN 3: REPORT ═══════════════ -->
+<div class="screen" id="screen-report">
+  <nav class="report-nav">
+    <div class="report-nav-logo">MAW</div>
+    <div class="report-nav-idea" id="report-nav-idea"></div>
+    <div class="report-nav-actions">
+      <button class="btn-ghost" id="new-analysis-btn">New analysis</button>
+      <button class="btn-lime" id="export-btn">Export MD</button>
+    </div>
+  </nav>
+  <div class="report-body" id="report-body">
+    <!-- filled by JS -->
+  </div>
+</div>
+
+<script>
+// ── NODES CONFIG ─────────────────────────────────────────────────────────────
+const NODES = [
+  { id: 'query_planner',    label: 'Query Planner',    desc: 'Breaks idea into research angles' },
+  { id: 'web_researcher',   label: 'Web Researcher',   desc: 'Searches across 6 angles in parallel' },
+  { id: 'competitor_intel', label: 'Competitor Intel', desc: 'Extracts competitor landscape' },
+  { id: 'market_sizing',    label: 'Market Sizing',    desc: 'TAM / SAM / SOM estimation' },
+  { id: 'swot_synthesiser', label: 'SWOT Synthesiser', desc: 'Grounded strengths & risks' },
+  { id: 'report_writer',    label: 'Report Writer',    desc: 'Structured intelligence report' },
+];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let currentIdea = '';
+let startTime = 0;
+let elapsedTimer = null;
+let sourceCount = 0;
+let eventCount = 0;
+let reportData = null;
+
+// ── SCREEN SWITCHER ───────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── SCREEN 1 LOGIC ────────────────────────────────────────────────────────────
+const ideaInput = document.getElementById('idea-input');
+const analyseBtn = document.getElementById('analyse-btn');
+const charUsed = document.getElementById('char-used');
+
+ideaInput.addEventListener('input', () => {
+  const n = ideaInput.value.length;
+  charUsed.textContent = n;
+  analyseBtn.disabled = n < 10;
+});
+
+document.querySelectorAll('.idea-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    ideaInput.value = chip.textContent;
+    charUsed.textContent = chip.textContent.length;
+    analyseBtn.disabled = false;
+    ideaInput.focus();
+  });
+});
+
+analyseBtn.addEventListener('click', startAnalysis);
+
+async function startAnalysis() {
+  const idea = ideaInput.value.trim();
+  if (!idea) return;
+  currentIdea = idea;
+
+  initPipelineScreen();
+  showScreen('screen-pipeline');
+
+  try {
+    const resp = await fetch('/api/analyse', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idea }),
+    });
+    if (!resp.ok) throw new Error('Server error');
+    const { job_id } = await resp.json();
+    streamEvents(job_id);
+  } catch (e) {
+    appendLog('error', 'error', e.message);
+  }
+}
+
+// ── PIPELINE SCREEN ───────────────────────────────────────────────────────────
+function initPipelineScreen() {
+  sourceCount = 0; eventCount = 0; reportData = null;
+  startTime = Date.now();
+  document.getElementById('stat-sources').textContent = '0';
+  document.getElementById('stat-events').textContent = '0';
+  document.getElementById('stat-elapsed').textContent = '0s';
+  document.getElementById('pipeline-idea-label').textContent = currentIdea;
+  document.getElementById('log-feed').innerHTML = '';
+
+  if (elapsedTimer) clearInterval(elapsedTimer);
+  elapsedTimer = setInterval(() => {
+    document.getElementById('stat-elapsed').textContent =
+      Math.floor((Date.now() - startTime) / 1000) + 's';
+  }, 1000);
+
+  // Build node list
+  const list = document.getElementById('node-list');
+  list.innerHTML = '';
+  NODES.forEach((node, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'node-item';
+    wrap.id = `node-${node.id}`;
+    wrap.innerHTML = `
+      <div class="node-top">
+        <div class="node-dot" id="dot-${node.id}"></div>
+        <span class="node-name pending" id="name-${node.id}">${node.label}</span>
+      </div>
+      <div class="node-track"><div class="node-fill" id="fill-${node.id}"></div></div>
+      <div class="node-status" id="status-${node.id}">${node.desc}</div>
+    `;
+    list.appendChild(wrap);
+    if (i < NODES.length - 1) {
+      const conn = document.createElement('div');
+      conn.className = 'node-connector';
+      list.appendChild(conn);
+    }
+  });
+}
+
+function setNodeState(nodeId, state, statusText) {
+  const dot = document.getElementById(`dot-${nodeId}`);
+  const name = document.getElementById(`name-${nodeId}`);
+  const fill = document.getElementById(`fill-${nodeId}`);
+  const status = document.getElementById(`status-${nodeId}`);
+  if (!dot) return;
+  dot.className = `node-dot ${state}`;
+  name.className = `node-name ${state}`;
+  fill.className = `node-fill ${state}`;
+  if (statusText) status.textContent = statusText;
+}
+
+function appendLog(nodeId, msg, data) {
+  const feed = document.getElementById('log-feed');
+  const now = new Date();
+  const time = now.toTimeString().slice(0,8);
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  const dataStr = data && typeof data === 'object' && !Array.isArray(data)
+    ? '' : (data ? ` — ${Array.isArray(data) ? data.join(', ') : data}` : '');
+  entry.innerHTML = `
+    <span class="log-time">${time}</span>
+    <span class="log-node ${nodeId}">${nodeId.replace(/_/g,' ')}</span>
+    <span class="log-msg">${msg}${dataStr}</span>
+  `;
+  feed.appendChild(entry);
+  feed.scrollTop = feed.scrollHeight;
+  eventCount++;
+  document.getElementById('stat-events').textContent = eventCount;
+}
+
+function streamEvents(jobId) {
+  const es = new EventSource(`/api/stream/${jobId}`);
+  let currentNode = null;
+
+  es.onmessage = (e) => {
+    const evt = JSON.parse(e.data);
+    const { node, msg, data } = evt;
+
+    if (node === 'done') {
+      es.close();
+      clearInterval(elapsedTimer);
+      NODES.forEach(n => setNodeState(n.id, 'done'));
+      reportData = data;
+      setTimeout(() => renderReport(data), 600);
+      return;
+    }
+    if (node === 'error') {
+      es.close();
+      clearInterval(elapsedTimer);
+      appendLog('error', msg);
+      return;
+    }
+
+    // Update node states
+    if (node !== currentNode) {
+      if (currentNode) setNodeState(currentNode, 'done', '✓ Complete');
+      setNodeState(node, 'running', msg);
+      currentNode = node;
+    } else {
+      const status = document.getElementById(`status-${node}`);
+      if (status) status.textContent = msg;
+    }
+
+    // Count sources from web_researcher
+    if (node === 'web_researcher' && data && Array.isArray(data)) {
+      sourceCount += data.length;
+      document.getElementById('stat-sources').textContent = sourceCount;
+    }
+    if (node === 'web_researcher' && msg.includes('→')) {
+      const match = msg.match(/→ (\d+) sources/);
+      if (match) {
+        sourceCount += parseInt(match[1]);
+        document.getElementById('stat-sources').textContent = sourceCount;
+      }
+    }
+
+    appendLog(node, msg, data);
+  };
+
+  es.onerror = () => {
+    es.close();
+    clearInterval(elapsedTimer);
+  };
+}
+
+// ── REPORT RENDERER ───────────────────────────────────────────────────────────
+function renderReport(r) {
+  showScreen('screen-report');
+  document.getElementById('report-nav-idea').textContent = r.idea || currentIdea;
+
+  const body = document.getElementById('report-body');
+  const verdict = r.opportunity_verdict || 'proceed-with-caution';
+  const verdictLabel = { go: '✓ GO', 'proceed-with-caution': '⚠ PROCEED WITH CAUTION', avoid: '✗ AVOID' }[verdict] || verdict;
+
+  const comp = r.competitors || (r.competitor_findings && r.competitor_findings.competitors) || [];
+  const sizing = r.market_sizing || {};
+  const swot = r.swot || {};
+  const gtm = r.go_to_market || {};
+  const invest = r.investment_required || {};
+  const risks = r.key_risks || [];
+  const recs = r.recommendations || [];
+  const sources = r.sources || [];
+  const tc = r.target_customer || {};
+
+  // competitor table rows
+  const compRows = comp.slice(0,6).map(c => {
+    const share = parseInt(c.market_share_pct) || 0;
+    return `<tr>
+      <td><div class="comp-name">${c.name || ''}</div><div class="comp-moves">${c.recent_moves || c.positioning || ''}</div></td>
+      <td>
+        <div class="share-bar-wrap">
+          <span style="font-size:.75rem;min-width:2.5rem">${share}%</span>
+          <div class="share-bar"><div class="share-fill" style="width:${Math.min(share,100)}%"></div></div>
+        </div>
+      </td>
+      <td style="font-size:.73rem;color:var(--muted)">${(c.strengths||[]).join(', ') || c.positioning || ''}</td>
+    </tr>`;
+  }).join('');
+
+  const compIntensity = r.competitor_findings?.competitive_intensity || 'medium';
+
+  // SWOT quads
+  const swotQuad = (letter, key, arr) => {
+    const items = (arr || []).map(pt => {
+      if (typeof pt === 'object') return `<div class="swot-point"><div class="swot-point-text">${pt.point||''}</div><div class="swot-point-ev">${pt.evidence||''}</div></div>`;
+      return `<div class="swot-point"><div class="swot-point-text">${pt}</div></div>`;
+    }).join('');
+    return `<div class="swot-quad ${letter}"><div class="swot-quad-label">${key}</div>${items}</div>`;
+  };
+
+  // milestones
+  const milestones = (gtm.early_milestones || []).map(m =>
+    `<div class="milestone"><div class="milestone-dot"></div><div class="milestone-text">${m}</div></div>`
+  ).join('');
+
+  // invest breakdown
+  const breakdown = invest.breakdown ? Object.entries(invest.breakdown).map(([k,v]) =>
+    `<div class="invest-row"><span>${k}</span><span style="color:var(--text)">${v}</span></div>`
+  ).join('') : '';
+
+  // risks
+  const riskItems = risks.map(r =>
+    `<div class="risk-item"><div class="risk-text">${r.risk||r}</div><div class="risk-mit"><span class="risk-mit-label">Mitigation:</span>${r.mitigation||'—'}</div></div>`
+  ).join('');
+
+  // recs
+  const recItems = recs.map((r,i) =>
+    `<div class="rec-item"><div class="rec-num">${String(i+1).padStart(2,'0')}</div><div class="rec-text">${r}</div></div>`
+  ).join('');
+
+  // sources
+  const sourceItems = sources.slice(0,10).map(s =>
+    `<div class="source-item"><div class="source-dot"></div><a href="${s.url}" target="_blank">${s.title || s.url}</a></div>`
+  ).join('');
+
+  const growthDrivers = (sizing.key_growth_drivers || []).map(d =>
+    `<span class="market-tag">${d}</span>`
+  ).join('');
+
+  body.innerHTML = `
+    <!-- Verdict -->
+    <div class="verdict-banner">
+      <div class="verdict-badge ${verdict}">${verdictLabel}</div>
+      <div class="verdict-text">
+        <h3>${r.opportunity_rationale || ''}</h3>
+        <p>${r.executive_summary || ''}</p>
+      </div>
+    </div>
+
+    <!-- Market Overview -->
+    <div class="r-section">
+      <div class="r-label">Market Overview</div>
+      <div class="r-prose">${r.market_overview || ''}</div>
+    </div>
+
+    <!-- Market Sizing -->
+    <div class="r-section">
+      <div class="r-label">Market Sizing — TAM / SAM / SOM</div>
+      <div class="tam-grid">
+        <div class="tam-card">
+          <div class="tam-label">TAM — Total Addressable Market</div>
+          <div class="tam-value">${sizing.tam?.value || '—'}</div>
+          <div class="tam-basis">${sizing.tam?.basis || ''}</div>
+        </div>
+        <div class="tam-card">
+          <div class="tam-label">SAM — Serviceable Market</div>
+          <div class="tam-value">${sizing.sam?.value || '—'}</div>
+          <div class="tam-basis">${sizing.sam?.basis || ''}</div>
+        </div>
+        <div class="tam-card">
+          <div class="tam-label">SOM — Realistic Capture</div>
+          <div class="tam-value">${sizing.som?.value || '—'}</div>
+          <div class="tam-basis">${sizing.som?.basis || ''}</div>
+        </div>
+      </div>
+      <div class="cagr-row">
+        <div class="cagr-val">${sizing.cagr || '—'} CAGR</div>
+        <div class="cagr-meta">${sizing.cagr_period || ''}<br>Market stage: <strong style="color:var(--text)">${sizing.market_stage || ''}</strong></div>
+      </div>
+      ${growthDrivers ? `<div class="market-tags">${growthDrivers}</div>` : ''}
+    </div>
+
+    <!-- Competitor Analysis -->
+    <div class="r-section">
+      <div class="r-label">Competitor Landscape</div>
+      <table class="comp-table">
+        <thead><tr><th>Competitor</th><th>Market Share</th><th>Key Strength</th></tr></thead>
+        <tbody>${compRows}</tbody>
+      </table>
+      <span class="intensity-badge ${compIntensity}">Competitive intensity: ${compIntensity}</span>
+    </div>
+
+    <!-- Target Customer -->
+    ${tc.primary ? `<div class="r-section">
+      <div class="r-label">Target Customer</div>
+      <div class="gtm-grid">
+        <div class="gtm-card"><div class="gtm-label">Primary Segment</div><div class="gtm-val">${tc.primary}</div></div>
+        <div class="gtm-card"><div class="gtm-label">Willingness to Pay</div><div class="gtm-val">${tc.willingness_to_pay||'—'}</div></div>
+        <div class="gtm-card"><div class="gtm-label">Demographics</div><div class="gtm-val">${tc.demographics||'—'}</div></div>
+        <div class="gtm-card"><div class="gtm-label">Key Pain Points</div><div class="gtm-val">${(tc.pain_points||[]).join(' · ')||'—'}</div></div>
+      </div>
+    </div>` : ''}
+
+    <!-- SWOT -->
+    <div class="r-section">
+      <div class="r-label">SWOT Analysis</div>
+      <div class="swot-grid">
+        ${swotQuad('S','Strengths',swot.strengths)}
+        ${swotQuad('W','Weaknesses',swot.weaknesses)}
+        ${swotQuad('O','Opportunities',swot.opportunities)}
+        ${swotQuad('T','Threats',swot.threats)}
+      </div>
+      ${swot.strategic_priority ? `<div class="strategic-priority"><span>Strategic priority: </span>${swot.strategic_priority}</div>` : ''}
+    </div>
+
+    <!-- Go-to-Market -->
+    ${gtm.recommended_channel ? `<div class="r-section">
+      <div class="r-label">Go-to-Market</div>
+      <div class="gtm-grid">
+        <div class="gtm-card"><div class="gtm-label">Recommended Channel</div><div class="gtm-val">${gtm.recommended_channel}</div></div>
+        <div class="gtm-card"><div class="gtm-label">Launch Geography</div><div class="gtm-val">${gtm.launch_geography||'—'}</div></div>
+        <div class="gtm-card" style="grid-column:span 2"><div class="gtm-label">Pricing Strategy</div><div class="gtm-val">${gtm.pricing_strategy||'—'}</div></div>
+      </div>
+      ${milestones ? `<div class="milestones" style="margin-top:.75rem">${milestones}</div>` : ''}
+    </div>` : ''}
+
+    <!-- Investment -->
+    ${invest.minimum_viable ? `<div class="r-section">
+      <div class="r-label">Investment Required</div>
+      <div class="invest-grid">
+        <div class="invest-card"><div class="invest-label">Minimum Viable</div><div class="invest-val">${invest.minimum_viable}</div></div>
+        <div class="invest-card"><div class="invest-label">Recommended</div><div class="invest-val">${invest.recommended||'—'}</div></div>
+      </div>
+      ${breakdown ? `<div class="invest-breakdown" style="margin-top:.75rem">${breakdown}</div>` : ''}
+    </div>` : ''}
+
+    <!-- Risks -->
+    ${riskItems ? `<div class="r-section">
+      <div class="r-label">Key Risks & Mitigations</div>
+      <div class="risk-list">${riskItems}</div>
+    </div>` : ''}
+
+    <!-- Recommendations -->
+    ${recItems ? `<div class="r-section">
+      <div class="r-label">Recommendations</div>
+      <div class="rec-list">${recItems}</div>
+    </div>` : ''}
+
+    <!-- Sources -->
+    ${sourceItems ? `<div class="r-section">
+      <div class="r-label">Sources</div>
+      <div class="sources-list">${sourceItems}</div>
+    </div>` : ''}
+  `;
+
+  // Animate share bars after render
+  setTimeout(() => {
+    document.querySelectorAll('.share-fill').forEach(el => {
+      const w = el.style.width;
+      el.style.width = '0';
+      setTimeout(() => { el.style.width = w; }, 50);
+    });
+  }, 100);
+}
+
+// ── NEW ANALYSIS + EXPORT ─────────────────────────────────────────────────────
+document.getElementById('new-analysis-btn').addEventListener('click', () => {
+  ideaInput.value = '';
+  charUsed.textContent = '0';
+  analyseBtn.disabled = true;
+  showScreen('screen-input');
+});
+
+document.getElementById('export-btn').addEventListener('click', () => {
+  if (!reportData) return;
+  const r = reportData;
+  const md = `# Market Analysis: ${r.idea || currentIdea}
+
+## Verdict
+**${r.opportunity_verdict?.toUpperCase()}** — ${r.opportunity_rationale}
+
+${r.executive_summary}
+
+## Market Overview
+${r.market_overview}
+
+## Market Sizing
+- TAM: ${r.market_sizing?.tam?.value}
+- SAM: ${r.market_sizing?.sam?.value}
+- SOM: ${r.market_sizing?.som?.value}
+- CAGR: ${r.market_sizing?.cagr} (${r.market_sizing?.cagr_period})
+
+## Competitors
+${(r.competitors||[]).map(c => `- **${c.name}** (${c.market_share_pct}%) — ${c.recent_moves||c.positioning}`).join('\n')}
+
+## SWOT
+### Strengths
+${(r.swot?.strengths||[]).map(s => `- ${s.point||s}`).join('\n')}
+### Weaknesses
+${(r.swot?.weaknesses||[]).map(s => `- ${s.point||s}`).join('\n')}
+### Opportunities
+${(r.swot?.opportunities||[]).map(s => `- ${s.point||s}`).join('\n')}
+### Threats
+${(r.swot?.threats||[]).map(s => `- ${s.point||s}`).join('\n')}
+
+## Recommendations
+${(r.recommendations||[]).map((r,i) => `${i+1}. ${r}`).join('\n')}
+
+## Sources
+${(r.sources||[]).map(s => `- [${s.title}](${s.url})`).join('\n')}
+`;
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `market-analysis-${Date.now()}.md`;
+  a.click();
+});
+</script>
+</body>
+</html>
